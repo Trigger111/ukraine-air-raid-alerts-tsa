@@ -223,7 +223,32 @@ use the probability outputs.
 
 ## Results — model
 
-_TBD — only if a model demonstrably beats the baselines above._
+A single **LogisticRegression** (standardised recency features + one-hot calendar;
+scaler and encoder fit on **train only**) on the same chronological 80/20 split:
+
+| baseline / model | accuracy | precision | recall | F1 | ROC-AUC | Brier |
+|---|---|---|---|---|---|---|
+| rolling-7d (best recency) | 0.703 | 0.746 | 0.908 | 0.819 | 0.548 | 0.213 |
+| rolling-30d | 0.726 | 0.745 | 0.956 | 0.837 | 0.540 | 0.199 |
+| base-rate constant | 0.739 | 0.739 | 1.000 | 0.850 | – | 0.195 |
+| **logreg_model** | 0.729 | 0.746 | 0.961 | 0.840 | **0.505** | **0.203** |
+
+**The model does not beat the baselines — reported honestly.**
+- ROC-AUC 0.505 (≈ chance) is *below* the recency baselines (~0.55), and Brier 0.203
+  is *worse* than the base-rate constant (0.195). By our pre-agreed success rule
+  (beat recency on ROC-AUC **and** base-rate on Brier), this is **not** a win.
+- **Why:** the largest coefficients are calendar dummies (`next_month_*`, `next_dow_*`)
+  — the model leaned on train-period seasonality that **did not generalise** across
+  the non-stationary 2025 boundary, while the recency-only baselines stayed more
+  robust. This confirms the overfitting risk flagged up front. (We did **not**
+  re-tune against the test set — that would be leakage.)
+- **Conclusion:** for next-day Kyiv City alert occurrence, simple **recency** is the
+  most honest "best" signal, and even it is weak (ROC-AUC ~0.55). Added model
+  complexity did not help. This is a valid, informative result: it quantifies the
+  limited short-horizon predictability of alert **activity** and guards against
+  overclaiming. It is **not** attack prediction.
+
+_Reproduce: `python -m src.model`._
 
 ## Limitations
 
