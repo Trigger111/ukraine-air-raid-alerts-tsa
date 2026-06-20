@@ -28,6 +28,14 @@ At the national level "any alert somewhere in Ukraine tomorrow" is almost always
 *yes* (degenerate); for quiet regions it is almost always *no*. Kyiv City sits in
 the class-balance sweet spot, so the classification task is meaningful.
 
+It is also the **cleanest unit given the data's structural break.** In the source
+data Kyiv City is a single **oblast-level** unit (no raion/hromada subdivision),
+so its daily target definition stays consistent across 2022–2026 and is **not
+affected by the national oblast→raion granularity shift** (that shift exists in
+the upstream dataset, not introduced by us). Remaining caveat: the Kyiv City series
+is still **non-stationary** (war intensity varies over time), which we address with
+chronological evaluation rather than by pretending it away.
+
 ## Data
 
 - **Source:** [Vadimkin/ukrainian-air-raid-sirens-dataset](https://github.com/Vadimkin/ukrainian-air-raid-sirens-dataset),
