@@ -71,12 +71,27 @@ all reported by `py -m src.pipeline`:
 - Fixed `RANDOM_SEED = 42` (`src/config.py`).
 - Smoke test the data layer: `py -m src.data_loader`.
 
+## Dashboard (exploratory, Phase 3A)
+
+An interactive Streamlit explorer for the processed tables — overview, national
+breakdown, Kyiv City patterns, and a Kyiv City vs Kyiv Oblast comparison. It is
+**exploratory only** (no model). Build the data first, then run locally:
+
+```bash
+python -m src.pipeline       # writes data/processed/*.csv
+streamlit run streamlit_app.py
+```
+
+If the processed CSVs are missing, the app shows a message asking you to run the
+pipeline first.
+
 ## Project structure
 
 ```
 .
 ├── README.md
 ├── requirements.txt
+├── streamlit_app.py         # exploratory dashboard (Phase 3A)
 ├── LICENSE                  # MIT (project code); dataset license: see Data
 ├── data/
 │   ├── raw/                 # pinned snapshot (git-ignored, fetched by loader)
