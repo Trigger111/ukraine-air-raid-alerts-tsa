@@ -1,0 +1,13 @@
+{
+  "source_repo": "Vadimkin/ukrainian-air-raid-sirens-dataset",
+  "source_file": "datasets/official_data_en.csv",
+  "source_url_pinned": "https://raw.githubusercontent.com/Vadimkin/ukrainian-air-raid-sirens-dataset/dac507f80fe59ef62d67e80be1e6b9558f126b33/datasets/official_data_en.csv",
+  "pinned_commit": "dac507f80fe59ef62d67e80be1e6b9558f126b33",
+  "retrieved_at_utc": "2026-06-20",
+  "rows": 271160,
+  "sha256": "a36eb2fac7606765b67967f4b70be0a2c93d15710972c01e27427be128ab7d58",
+  "date_range_utc": ["2022-03-15", "2026-06-20"],
+  "regions_count": 25,
+  "license": "Not stated upstream; attributed to the dataset author, used as-is for research/education.",
+  "notes": "Official source only. Volunteer data intentionally excluded from the MVP (different schema, region-level only, imputed 'naive' durations)."
+}
