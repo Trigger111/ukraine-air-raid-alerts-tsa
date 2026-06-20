@@ -113,6 +113,13 @@ pipeline first.
 
 - **EDA:** national overview (all regions) + Kyiv City hourly patterns
   (hour-of-day, `hour × weekday` heatmap, durations) + Kyiv City vs Kyiv Oblast.
+- **Regional "time under alert" (level-aware):** a region holds alerts at
+  oblast/raion/hromada level. Summing every episode ("row-sum") **overcounts**
+  time when sub-areas are alerted in parallel (~1.8–2.5× in front-line oblasts);
+  oblast-level-only **undercounts** the raion era. The dashboard defaults to
+  **union time** (wall-clock time during which ≥1 alert is active in the region),
+  the only measure comparable across the Dec-2025 oblast→raion shift. Kyiv City
+  is single-level, so this does **not** affect the MVP target.
 - **Target (daily, Kyiv City):** primary `has_alert_next_day` (classification);
   optional `alert_minutes_next_day` (regression).
 - **Naive baselines:** persistence (*yesterday*), 7-day rolling mean,

@@ -85,3 +85,52 @@ def daily_region(events: pd.DataFrame, region: str = config.TARGET_REGION) -> pd
 def hourly_region(events: pd.DataFrame, region: str = config.TARGET_REGION) -> pd.DataFrame:
     """Hourly overlap-based table for a single region (EDA; model = future work)."""
     raise NotImplementedError("EDA/future work: hourly aggregation")
+
+
+# --- regional "time under alert" (level-aware) ----------------------------
+# A region contains alerts at oblast / raion / hromada level. Summing every
+# episode's duration ("row-sum") overcounts time when several sub-areas are
+# alerted in parallel (verified: ~1.8-2.5x in front-line oblasts). The honest
+# "time the region was under alert" is the UNION of all intervals (any level):
+# wall-clock time during which at least one alert was active in the region.
+# This is the only measure comparable across the Dec-2025 oblast->raion shift.
+
+def region_union_hours(events: pd.DataFrame) -> pd.Series:
+    """Union 'time under alert' (hours) per region, across all levels.
+
+    Excludes censored and long-outlier alerts. Vectorised interval union.
+    """
+    d = events[(~events["is_censored"]) & (~events["is_long_alert"])]
+    d = d.sort_values(["region", "started_at_utc"])
+    cummax = d.groupby("region")["finished_at_utc"].cummax()
+    prev = cummax.groupby(d["region"]).shift()
+    # New segment when this alert starts strictly after everything so far ended
+    # (touching intervals merge -> continuous coverage).
+    new_seg = (d["started_at_utc"] > prev) | prev.isna()
+    seg = new_seg.groupby(d["region"]).cumsum()
+    segs = (
+        d.assign(seg=seg)
+        .groupby(["region", "seg"])
+        .agg(s=("started_at_utc", "min"), e=("finished_at_utc", "max"))
+    )
+    mins = (segs["e"] - segs["s"]).dt.total_seconds() / 60.0
+    return (mins.groupby("region").sum() / 60.0).sort_values(ascending=False)
+
+
+def region_hours(events: pd.DataFrame, mode: str = "union") -> pd.Series:
+    """Hours under alert per region under one of three aggregation modes.
+
+    mode="union"       -> union time across all levels (recommended)
+    mode="oblast_only" -> only oblast-wide declarations (undercounts raion era)
+    mode="row_sum"     -> sum of every episode across levels (overcounts)
+    All modes exclude censored and long-outlier alerts.
+    """
+    d = events[(~events["is_censored"]) & (~events["is_long_alert"])]
+    if mode == "row_sum":
+        return (d.groupby("region")["duration_min"].sum() / 60.0).sort_values(ascending=False)
+    if mode == "oblast_only":
+        oblast = d[d["level"] == "oblast"]
+        return (oblast.groupby("region")["duration_min"].sum() / 60.0).sort_values(ascending=False)
+    if mode == "union":
+        return region_union_hours(events)
+    raise ValueError(f"unknown mode: {mode!r}")
