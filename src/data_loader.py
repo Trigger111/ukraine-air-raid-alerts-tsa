@@ -2,7 +2,8 @@
 
 Reproducibility contract:
   * Always read the snapshot pinned in :mod:`config` (commit + SHA-256).
-  * If a local copy exists and its hash matches, use it (offline-friendly).
+  * If a local copy exists and its hash matches, use it (offline-friendly,
+    and requires no third-party packages).
   * Otherwise download from the pinned commit URL, verify the hash, cache it.
 
 This module is data *infrastructure*, not analysis — it performs no cleaning.
@@ -16,7 +17,6 @@ import hashlib
 from pathlib import Path
 
 import pandas as pd
-import requests
 
 from . import config
 
@@ -43,6 +43,10 @@ def ensure_raw(force: bool = False) -> Path:
             f"!= pinned {config.RAW_SHA256}. Delete the file or call "
             f"ensure_raw(force=True) to re-download the pinned commit."
         )
+
+    # Network is only needed on the download path -> import lazily so the
+    # cached/offline path has zero third-party dependencies.
+    import requests
 
     resp = requests.get(config.RAW_URL, timeout=120)
     resp.raise_for_status()

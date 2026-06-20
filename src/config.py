@@ -40,3 +40,9 @@ META_FILE = ROOT / "data" / "meta.json"
 
 # --- Reproducibility ------------------------------------------------------
 RANDOM_SEED = 42
+
+# --- Data-quality thresholds ----------------------------------------------
+# A single alert longer than this is implausible (likely an unrecorded "all
+# clear"); it is flagged as ``is_long_alert`` and excluded from duration-based
+# EDA. Kyiv City (the MVP unit) has none; these cluster on front-line hromadas.
+LONG_ALERT_HOURS = 24

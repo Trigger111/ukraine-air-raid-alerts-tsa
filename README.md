@@ -45,6 +45,22 @@ the class-balance sweet spot, so the classification task is meaningful.
   which would corrupt duration analysis. (Note: this dataset `naive` flag is
   unrelated to the *naive baselines* used in modelling — see Methodology.)
 
+### Data quality (found during cleaning)
+
+`src/clean.py` surfaces and handles three real issues in the upstream snapshot,
+all reported by `py -m src.pipeline`:
+
+- **~42% exact-duplicate rows** (113,845 of 271,160) — identical
+  `unit + start + end`. Deduped → 157,315 canonical events. Likely an artefact of
+  how the upstream repo is regenerated; **deduping is essential**.
+- **Implausibly long alerts** (686 events > 24 h, up to ~604 days) — concentrated
+  on front-line hromadas (Dnipropetrovska, Donetska, Zaporizka), almost all at
+  raion/hromada level. Flagged via `is_long_alert` (not dropped) and excluded from
+  duration-based EDA. **Kyiv City has none**, so the MVP target is unaffected.
+- After deduping: **no overlaps within an exact unit**, and **no censoring** in
+  this snapshot (every alert has a recorded end). The pipeline still handles both
+  for robustness.
+
 ## Reproducibility
 
 - Python ≥ 3.11 (uses the stdlib `zoneinfo`). Install deps:
