@@ -187,9 +187,43 @@ alert **declarations / activity**, *not* attacks or shelling.
 - the **monthly trend** uses *region-alert-days* (distinct region×day) as a
   granularity-invariant activity measure.
 
-## Results
+## Results — baselines (Phase 5)
 
-_TBD — populated after modelling._
+Target: `has_alert_next_day` for **Kyiv City**. Chronological 80/20 hold-out
+(no shuffle): train `2022-03-22 … 2025-08-11` (1,239 days, base rate **0.692**),
+test `2025-08-12 … 2026-06-17` (310 days, base rate **0.739**). The test base rate
+is higher than train — a direct sign of **non-stationarity**, which is exactly why
+the split is chronological. Hard metrics use a fixed 0.5 threshold; ROC-AUC/Brier
+use the probability outputs.
+
+| baseline | accuracy | precision | recall | F1 | ROC-AUC | Brier |
+|---|---|---|---|---|---|---|
+| majority (always alert) | 0.739 | 0.739 | 1.000 | 0.850 | – | 0.261 |
+| base-rate constant | 0.739 | 0.739 | 1.000 | 0.850 | – | **0.195** |
+| persistence | 0.639 | 0.755 | 0.755 | 0.755 | 0.532 | 0.361 |
+| rolling-7d | 0.703 | 0.746 | 0.908 | 0.819 | **0.548** | 0.213 |
+| rolling-30d | 0.726 | 0.745 | 0.956 | 0.837 | 0.540 | 0.199 |
+| day-of-week climatology | 0.739 | 0.739 | 1.000 | 0.850 | 0.465 | 0.198 |
+
+*(ROC-AUC is undefined for constant predictors. Regenerate with `python -m src.evaluate`.)*
+
+**Reading the results (skill, not absolute accuracy):**
+- **Accuracy/F1 are misleading here.** With a 0.739 base rate, "always predict an
+  alert" already scores 0.739 / 0.850; base-rate-constant and day-of-week
+  climatology collapse to the same all-positive prediction at a 0.5 threshold.
+- **Next-day occurrence is only weakly predictable.** The best discrimination is
+  ROC-AUC ≈ 0.55 (rolling-7d) — barely above chance. **Weekly seasonality carries
+  essentially no signal** (day-of-week ROC-AUC 0.465, below 0.5).
+- **A flat climatological probability is the calibration bar.** Base-rate constant
+  has the best Brier (0.195); the recency baselines do not beat it.
+- **Skill bar for any future model:** to be worth anything it must beat *both* the
+  recency baselines on ROC-AUC (> ~0.55) *and* base-rate-constant on Brier
+  (< ~0.195) — a deliberately honest, modest target. This is alert **activity**,
+  not attack prediction.
+
+## Results — model
+
+_TBD — only if a model demonstrably beats the baselines above._
 
 ## Limitations
 
