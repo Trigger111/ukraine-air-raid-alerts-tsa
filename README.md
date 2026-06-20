@@ -223,32 +223,35 @@ use the probability outputs.
 
 ## Results — model
 
-A single **LogisticRegression** (standardised recency features + one-hot calendar;
-scaler and encoder fit on **train only**) on the same chronological 80/20 split:
+Two models on the same chronological 80/20 split, same features/target/metrics,
+**no grid search, no test-set tuning**: a lean explainable **LogisticRegression**
+(standardised recency + one-hot calendar) and a stronger **HistGradientBoosting**
+sanity-check (default hyper-parameters). Both fit on **train only**.
 
 | baseline / model | accuracy | precision | recall | F1 | ROC-AUC | Brier |
 |---|---|---|---|---|---|---|
-| rolling-7d (best recency) | 0.703 | 0.746 | 0.908 | 0.819 | 0.548 | 0.213 |
+| rolling-7d (best recency) | 0.703 | 0.746 | 0.908 | 0.819 | **0.548** | 0.213 |
 | rolling-30d | 0.726 | 0.745 | 0.956 | 0.837 | 0.540 | 0.199 |
-| base-rate constant | 0.739 | 0.739 | 1.000 | 0.850 | – | 0.195 |
-| **logreg_model** | 0.729 | 0.746 | 0.961 | 0.840 | **0.505** | **0.203** |
+| base-rate constant | 0.739 | 0.739 | 1.000 | 0.850 | – | **0.195** |
+| logreg | 0.729 | 0.746 | 0.961 | 0.840 | 0.505 | 0.203 |
+| histgbm | 0.655 | 0.733 | 0.838 | 0.782 | 0.438 | 0.248 |
 
-**The model does not beat the baselines — reported honestly.**
-- ROC-AUC 0.505 (≈ chance) is *below* the recency baselines (~0.55), and Brier 0.203
-  is *worse* than the base-rate constant (0.195). By our pre-agreed success rule
-  (beat recency on ROC-AUC **and** base-rate on Brier), this is **not** a win.
-- **Why:** the largest coefficients are calendar dummies (`next_month_*`, `next_dow_*`)
-  — the model leaned on train-period seasonality that **did not generalise** across
-  the non-stationary 2025 boundary, while the recency-only baselines stayed more
-  robust. This confirms the overfitting risk flagged up front. (We did **not**
-  re-tune against the test set — that would be leakage.)
-- **Conclusion:** for next-day Kyiv City alert occurrence, simple **recency** is the
-  most honest "best" signal, and even it is weak (ROC-AUC ~0.55). Added model
-  complexity did not help. This is a valid, informative result: it quantifies the
-  limited short-horizon predictability of alert **activity** and guards against
-  overclaiming. It is **not** attack prediction.
+**Neither model beats the baselines — and the stronger model is worse.**
+- By the pre-agreed rule (beat recency on ROC-AUC **and** base-rate on Brier), both
+  fail: LogReg 0.505 / 0.203, HistGBM 0.438 / 0.248.
+- **More capacity made it worse, not better.** HistGBM's ROC-AUC (0.438) is below
+  LogReg's (0.505) and below 0.5 — it overfit train patterns that reversed on the
+  non-stationary 2025 test. Permutation importance confirms this: the features it
+  relied on (`alert_minutes_*`, calendar) have *negative* importance (shuffling them
+  *improves* test AUC); only rolling recency is mildly positive.
+- **This is a decisive sanity-check:** the limited predictability is *real*, not an
+  artefact of an under-powered model. The simplest **recency** baseline remains the
+  honest best (ROC-AUC ~0.55); base-rate constant is the calibration bar.
+- **Conclusion:** next-day Kyiv City alert occurrence is not meaningfully predictable
+  from simple temporal features — we report this rather than overclaim. It is alert
+  **activity**, not attack prediction.
 
-_Reproduce: `python -m src.model`._
+_Reproduce: `python -m src.model` (LogReg + HistGBM vs baselines)._
 
 ## Limitations
 
